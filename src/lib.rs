@@ -156,41 +156,39 @@ impl<const ORDER: usize> Heap<ORDER> {
     }
 
     /// Dealloc a range of memory from the heap
-    pub fn dealloc(&mut self, ptr: NonNull<u8>, layout: Layout) {
+    pub unsafe fn dealloc(&mut self, ptr: NonNull<u8>, layout: Layout) {
         let size = max(
             layout.size().next_power_of_two(),
             max(layout.align(), size_of::<usize>()),
         );
         let class = size.trailing_zeros() as usize;
 
-        unsafe {
-            // Put back into free list
-            self.free_list[class].push(ptr.as_ptr() as *mut usize);
+        // Put back into free list
+        self.free_list[class].push(ptr.as_ptr() as *mut usize);
 
-            // Merge free buddy lists
-            let mut current_ptr = ptr.as_ptr() as usize;
-            let mut current_class = class;
+        // Merge free buddy lists
+        let mut current_ptr = ptr.as_ptr() as usize;
+        let mut current_class = class;
 
-            while current_class < self.free_list.len() - 1 {
-                let buddy = current_ptr ^ (1 << current_class);
-                let mut flag = false;
-                for block in self.free_list[current_class].iter_mut() {
-                    if block.value() as usize == buddy {
-                        block.pop();
-                        flag = true;
-                        break;
-                    }
-                }
-
-                // Free buddy found
-                if flag {
-                    self.free_list[current_class].pop();
-                    current_ptr = min(current_ptr, buddy);
-                    current_class += 1;
-                    self.free_list[current_class].push(current_ptr as *mut usize);
-                } else {
+        while current_class < self.free_list.len() - 1 {
+            let buddy = current_ptr ^ (1 << current_class);
+            let mut flag = false;
+            for block in self.free_list[current_class].iter_mut() {
+                if block.value() as usize == buddy {
+                    block.pop();
+                    flag = true;
                     break;
                 }
+            }
+
+            // Free buddy found
+            if flag {
+                self.free_list[current_class].pop();
+                current_ptr = min(current_ptr, buddy);
+                current_class += 1;
+                self.free_list[current_class].push(current_ptr as *mut usize);
+            } else {
+                break;
             }
         }
 

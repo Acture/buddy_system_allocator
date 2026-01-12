@@ -113,7 +113,9 @@ fn test_heap_alloc_and_free() {
     }
     for _ in 0..100 {
         let addr = heap.alloc(Layout::from_size_align(1, 1).unwrap()).unwrap();
-        heap.dealloc(addr, Layout::from_size_align(1, 1).unwrap());
+        unsafe {
+            heap.dealloc(addr, Layout::from_size_align(1, 1).unwrap());
+        }
     }
 }
 
@@ -237,5 +239,7 @@ fn test_heap_merge_final_order() {
     let alloc = heap.alloc(layout).unwrap();
 
     // deallocation should not attempt to merge the two contiguous ranges as the next order does not exist
-    heap.dealloc(alloc, layout);
+    unsafe {
+        heap.dealloc(alloc, layout);
+    }
 }
