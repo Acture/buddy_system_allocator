@@ -154,18 +154,18 @@ impl<const ORDER: usize> FrameAllocator<ORDER> {
         // Merge free buddy lists
         let mut current_ptr = start_frame;
         let mut current_class = class;
-        while current_class < self.free_list.len() {
+        while current_class < self.free_list.len() - 1 {
             let buddy = current_ptr ^ (1 << current_class);
             if self.free_list[current_class].remove(&buddy) {
                 // Free buddy found
                 current_ptr = min(current_ptr, buddy);
                 current_class += 1;
             } else {
-                self.free_list[current_class].insert(current_ptr);
                 break;
             }
         }
 
+        self.free_list[current_class].insert(current_ptr);
         self.allocated -= size;
     }
 }
