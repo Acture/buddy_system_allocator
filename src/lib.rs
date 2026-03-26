@@ -84,7 +84,9 @@ impl<const ORDER: usize> Heap<ORDER> {
     /// # Safety
     ///
     /// The caller must ensure the memory range is valid, writable, and not currently managed by
-    /// any other allocator. The range must remain available for the lifetime of this heap.
+    /// any other allocator or by this `Heap`. In particular, the provided `[start, end)` range
+    /// must not overlap with any memory region that has already been added to this `Heap`. The
+    /// range must remain available for the lifetime of this heap.
     pub unsafe fn add_to_heap(&mut self, mut start: usize, mut end: usize) {
         // avoid unaligned access on some platforms
         start = (start + size_of::<usize>() - 1) & (!size_of::<usize>() + 1);
@@ -119,7 +121,10 @@ impl<const ORDER: usize> Heap<ORDER> {
     /// # Safety
     ///
     /// The caller must ensure the memory range is valid, writable, and not currently managed by
-    /// any other allocator. The range must remain available for the lifetime of this heap.
+    /// any other allocator. Additionally, the range `[start, start + size)` must be disjoint from
+    /// every memory region previously added to this heap instance, whether via
+    /// [`Heap::add_to_heap`] or [`Heap::init`]. The range must remain available for the lifetime
+    /// of this heap.
     pub unsafe fn init(&mut self, start: usize, size: usize) {
         self.add_to_heap(start, start + size);
     }
@@ -169,8 +174,8 @@ impl<const ORDER: usize> Heap<ORDER> {
     ///
     /// # Safety
     ///
-    /// `ptr` and `layout` must exactly match a previous successful allocation from this heap that
-    /// has not already been deallocated.
+    /// `ptr` and `layout` must exactly match a previous successful allocation from this specific
+    /// `Heap` instance, and that allocation must not already have been deallocated.
     pub unsafe fn dealloc(&mut self, ptr: NonNull<u8>, layout: Layout) {
         let size = max(
             layout.size().next_power_of_two(),
