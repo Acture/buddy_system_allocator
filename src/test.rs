@@ -212,6 +212,20 @@ fn test_frame_allocator_aligned() {
 }
 
 #[test]
+fn test_frame_allocator_merge_final_order() {
+    let mut frame = FrameAllocator::<2>::new();
+    frame.add_frame(0, 4);
+
+    let first = frame.alloc(2).unwrap();
+    let second = frame.alloc(2).unwrap();
+
+    frame.dealloc(first, 2);
+    frame.dealloc(second, 2);
+
+    assert_eq!(frame.alloc(2), Some(0));
+}
+
+#[test]
 fn test_heap_merge_final_order() {
     const NUM_ORDERS: usize = 5;
 
