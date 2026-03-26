@@ -55,16 +55,17 @@ impl<const ORDER: usize> FrameAllocator<ORDER> {
 
         let mut total = 0;
         let mut current_start = start;
+        let max_block_size = 1 << (ORDER - 1);
 
         while current_start < end {
             let lowbit = if current_start > 0 {
                 current_start & (!current_start + 1)
             } else {
-                32
+                max_block_size
             };
             let size = min(
                 min(lowbit, prev_power_of_two(end - current_start)),
-                1 << (ORDER - 1),
+                max_block_size,
             );
             total += size;
 
