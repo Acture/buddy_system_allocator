@@ -30,6 +30,11 @@ impl LinkedList {
     }
 
     /// Push `item` to the front of the list
+    ///
+    /// # Safety
+    ///
+    /// `item` must be a valid, writable pointer. The caller must ensure the pointed value can be
+    /// used to store the next pointer for this intrusive linked list.
     pub unsafe fn push(&mut self, item: *mut usize) {
         *item = self.head as usize;
         self.head = item;

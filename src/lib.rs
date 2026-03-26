@@ -79,7 +79,12 @@ impl<const ORDER: usize> Heap<ORDER> {
         Self::new()
     }
 
-    /// Add a range of memory [start, end) to the heap
+    /// Add a range of memory `[start, end)` to the heap.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure the memory range is valid, writable, and not currently managed by
+    /// any other allocator. The range must remain available for the lifetime of this heap.
     pub unsafe fn add_to_heap(&mut self, mut start: usize, mut end: usize) {
         // avoid unaligned access on some platforms
         start = (start + size_of::<usize>() - 1) & (!size_of::<usize>() + 1);
@@ -109,7 +114,12 @@ impl<const ORDER: usize> Heap<ORDER> {
         self.total += total;
     }
 
-    /// Add a range of memory [start, start+size) to the heap
+    /// Add a range of memory `[start, start + size)` to the heap.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure the memory range is valid, writable, and not currently managed by
+    /// any other allocator. The range must remain available for the lifetime of this heap.
     pub unsafe fn init(&mut self, start: usize, size: usize) {
         self.add_to_heap(start, start + size);
     }
@@ -155,7 +165,12 @@ impl<const ORDER: usize> Heap<ORDER> {
         Err(())
     }
 
-    /// Dealloc a range of memory from the heap
+    /// Dealloc a range of memory from the heap.
+    ///
+    /// # Safety
+    ///
+    /// `ptr` and `layout` must exactly match a previous successful allocation from this heap that
+    /// has not already been deallocated.
     pub unsafe fn dealloc(&mut self, ptr: NonNull<u8>, layout: Layout) {
         let size = max(
             layout.size().next_power_of_two(),
